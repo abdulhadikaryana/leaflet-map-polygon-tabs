@@ -1,11 +1,58 @@
 // Edit the initial year and number of tabs to match your GeoJSON data and tabs in index.html
-var year = "1910";
-var tabs = 11;
+var tab = "tab1";
+var tabs = 8;
+
+var tab_names = {
+  'tab1': ['DIM1', 30.55],
+  'tab2': ['DIM2', 69.67],
+  'tab3': ['DIM3', 72.84],
+  'tab4': ['DIM4', 41.11],
+  'tab5': ['DIM5', 36.57],
+  'tab6': ['DIM6', 55.03],
+  'tab7': ['DIM7', 54.97],
+  'tab8': ['IPK_Rasion', 53.74],
+};
+
+var indonesia = [
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  
+];
+
+var colors = [
+  '#ffffff', // -4
+  '#ffe6e7', // -3
+  '#ffcdce', // -2
+  '#ffb4b5', // -1
+  '#ff9b9d', // 0
+  '#ff696b', // 1
+  '#ff5053', // 2
+  '#ff373a', // 3
+  '#ff1e21', // 4
+];
+
+var simple_colors = [
+  '#0022ff',
+  '#9ba8ff',
+];
+
+// Edit range cutoffs and colors to match your data; see http://colorbrewer.org
+// Any values not listed in the ranges below displays as the last color
+function getColor(d, nas) {
+  // var n = Math.round((d-nas)/(nas/3));
+  // n = (n < -4 ? -4 : n > 4 ? 4 : n) + 4;
+  return d >= nas ? simple_colors[0] : simple_colors[1];
+}
 
 // Edit the center point and zoom level
 var map = L.map('map', {
-  center: [41.79, -72.6],
-  zoom: 10,
+  center: [-2, 118],
+  zoom: 5,
   scrollWheelZoom: false
 });
 
@@ -19,30 +66,22 @@ new L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png
 }).addTo(map);
 
 // Edit to upload GeoJSON data file from your local directory
-$.getJSON("town-home-value-index.geojson", function (data) {
+$.getJSON("ipk_Indonesia.geojson", function (data) {
   geoJsonLayer = L.geoJson(data, {
     style: style,
     onEachFeature: onEachFeature
   }).addTo(map);
 });
 
-// Edit range cutoffs and colors to match your data; see http://colorbrewer.org
-// Any values not listed in the ranges below displays as the last color
-function getColor(d) {
-  return d > 2.0 ? '#006d2c' :
-         d > 1.5 ? '#31a354' :
-         d > 1.0 ? '#74c476' :
-         d > 0.5 ? '#bae4b3' :
-         d > 0.1 ? '#edf8e9' :
-                   'white' ;
-}
+
 
 // Edit the getColor property to match data properties in your GeoJSON file
 // In this example, columns follow this pattern: index1910, index1920...
 function style(feature) {
+  var t = tab_names[tab];
   return {
-    fillColor: getColor(feature.properties["index" + year]),
-    weight: 1,
+    fillColor: getColor(feature.properties[t[0]], t[1]),
+    weight: 0.5,
     opacity: 1,
     color: 'black',
     fillOpacity: 0.9
@@ -88,7 +127,9 @@ info.onAdd = function (map) {
 info.update = function (props) {
   var winName =
   this._div.innerHTML = (props ?
-    '<div class="areaName">' + props.town + '</div>' : '<div class="areaName faded"><small>Hover over areas<br>Click tabs or arrow keys</small></div>') + '<div class="areaLabel"><div class="areaValue">Home Value Index</div>' +(props ? '' + (checkNull(props["index" + year])) : '--') + '</div>';
+    '<div class="areaName">' + props.PROVINSI + '</div>' : '<div class="areaName faded"><small>Hover over areas<br>Click tabs or arrow keys</small></div>') +
+    '<div class="areaLabel"><div class="areaValue">Nilai</div>' +(props ? '' + (checkNull(props[tab_names[tab][0]])) : '--') + '</div>' + 
+    '<div class="areaLabel"><div class="areaValue">Nasional</div>' +(props ? '' + (checkNull(tab_names[tab][1])) : '--') + '</div>';
 };
 info.addTo(map);
 
@@ -96,8 +137,7 @@ info.addTo(map);
 $(".tabItem").click(function() {
   $(".tabItem").removeClass("selected");
   $(this).addClass("selected");
-  year = $(this).html();
-  // year = $(this).html().split("-")[1];  /* use for school years, eg 2010-11 */
+  tab = $(this).attr('id');
   geoJsonLayer.setStyle(style);
 });
 
@@ -106,16 +146,14 @@ $(".tabItem").click(function() {
 var legend = L.control({position: 'bottomright'});
 legend.onAdd = function (map) {
   var div = L.DomUtil.create('div', 'info legend'),
-    grades = [0.1, 0.5, 1.0, 1.5, 2],
+    grades = [0, 1],
+    label_names = ['diatas nasional', 'dibawah nasional'],
     labels = [],
-    from, to;
+    from;
   for (var i = 0; i < grades.length; i++) {
     from = grades[i];
-    to = grades[i + 1];
-    // manually inserted from + 0.1 to start one step above default 0 = white color
     labels.push(
-      '<i style="background:' + getColor(from + 0.1) + '"></i> ' +
-      from + (to ? '&ndash;' + to : '+'));
+      '<i style="background:' + simple_colors[from] + '"></i> ' + label_names[i]);
   }
   div.innerHTML = labels.join('<br>');
   return div;
